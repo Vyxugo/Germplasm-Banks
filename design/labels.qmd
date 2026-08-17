@@ -31,17 +31,16 @@ gs <- "url" %>%
 
 fb <- gs %>% 
   range_read(ss = .,sheet = "fb")
+
+#> Google fonts: https://fonts.google.com/
+
+font <- c("Merriweather Sans", "Permanent Marker", "Tillana")
+huito_fonts(font)
 ```
 
 ## Labels 
 
 ```{r}
-#| eval: false
-
-font <- c("Merriweather Sans", "Permanent Marker", "Tillana")
-
-huito_fonts(font)
-
 label <- fb %>%
   label_layout(size = c(5.2, 10)
                , border_color = "forestgreen"
@@ -63,40 +62,43 @@ label <- fb %>%
     , position = c(2.6, 5.5)
     ) %>% 
   include_text(value = "plots"
-               , position = c(4.5, 9.5)
+               , position = c(4.4, 9.5)
                , size = 16
                , color = "black"
-               , font[3]
+               , font = font[3]
                ) %>% 
-  include_text(value = "variable"
+  include_text(value = "factor1"
                , position = c(2.6, 2.6)
                , size = 16
                , color = "blue"
-               , font[3]
+               , font = font[1]
+               , prefix = "Factor1: "
                ) %>% 
-  include_text(value = "variable"
-               , position = c(2.6, 1.9)
+  include_text(value = "factor2"
+               , position = c(2.6, 1.8)
                , size = 15
                , color = "red"
-               , font[1]
+               , font = font[1]
+               , prefix = "Factor2: "
                ) %>% 
   include_image(
     value = "https://huito.inkaverse.com/img/scale.pdf"
     , size = c(5, 1)
     , position = c(2.6, 0.9)
-    # , opts = 'image_convert(type = "Grayscale")'
+    , opts = 'image_convert(type = "Grayscale")'
     ) 
 
-label %>% label_print()
+label %>% label_print(mode = "preview")
 ```
 
 ```{r}
 #| eval: false
 
 label %>% 
-  label_print(mode = "c"
-              , filename = "labels"
-              , paper = c(21.0, 29.7)
+  label_print(mode = "complete"
+              , filename = "design/labels"
+              # , paper = c(100, 100)
+              , units = "cm"
               )
 ```
 

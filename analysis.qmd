@@ -1,6 +1,6 @@
 ---
-title: ""
-author: ""
+title: "Cultivos emergentes para la agricultura del futuro: situación de los bancos de germoplasma y estrategias de conservación en el Perú"
+author: "Victor-Hugo Baldera-Chapoñan1,2, Wagner Meza Maicelo1,2, Yoel Diaz-Saucedo3,            Flavio Lozano-Isla1,2,3*."
 format:
   html:
     toc: true
@@ -10,7 +10,6 @@ format:
     number-sections: true
     self-contained: true
     code-fold: true
-    output-file: "ESM_1"
 editor_options: 
   chunk_output_type: console
 execute: 
@@ -22,48 +21,381 @@ execute:
 # Project Setup
 
 ```{r}
-#| label:  setup
+#| label: setup
 
 source('https://inkaverse.com/setup.r')
+library(ggstats)
+library(dplyr)
+library(patchwork) 
+library(ggtext)
 ```
 
 # Data import
 
 ```{r}
-gs <- "url" %>% 
+gs <- "https://docs.google.com/spreadsheets/d/1zbOM_yF7pJvFwsJeQcLub-px80fI0nl5PFG3gFjfTFc/edit?gid=861356368#gid=861356368" %>% 
   as_sheets_id()
 
 fb <- gs %>% 
-  range_read(ss = .,sheet = "fb")
+  range_read(ss = .,sheet = "emergentes") 
+
+fb <- fb %>% 
+  dplyr::select(c("Acro","Limitaciones","Disponiblidad de intercambio"))%>% 
+drop_na()
+
+str(fb)
 ```
-
-# References
-
-Broman, K. W., & Woo, K. H. (2017). Data organization in spreadsheets. The American Statistician, 72(1), 2–10. https://doi.org/10.1080/00031305.2017.1375989
-
-Zuur, A. F., Ieno, E. N., & Elphick, C. S. (2009). A protocol for data exploration to avoid common statistical problems. Methods in Ecology and Evolution, 1(1), 3–14. https://doi.org/10.1111/j.2041-210x.2009.00001.x
-
-Francoishusson. (2017, July 13). PCA course using FactoMineR | R-bloggers. R-bloggers. https://www.r-bloggers.com/2017/07/pca-course-using-factominer/
-
-Kozak, M., & Piepho, H. (2017). What’s normal anyway? Residual plots are more telling than significance tests when checking ANOVA assumptions. Journal of Agronomy and Crop Science, 204(1), 86–98. https://doi.org/10.1111/jac.12220
-
-Tanaka, E., & Hui, F. K. C. (2019). Symbolic formulae for linear mixed models. In Communications in computer and information science (pp. 3–21). https://doi.org/10.1007/978-981-15-1960-4_1
-
-Schielzeth, H., Dingemanse, N. J., Nakagawa, S., Westneat, D. F., Allegue, H., Teplitsky, C., Réale, D., Dochtermann, N. A., Garamszegi, L. Z., & Araya‐Ajoy, Y. G. (2020). Robustness of linear mixed‐effects models to violations of distributional assumptions. Methods in Ecology and Evolution, 11(9), 1141–1152. https://doi.org/10.1111/2041-210x.13434
-
-# Research Objective
-
-1. 
-1.
-
-## RO 1
 
 ```{r}
 
-```
 
-## RO 2
+fb <- fb %>%
+  rename(Disponibilidad_intercambio = `Disponiblidad de intercambio`)
+
+crear_banner <- function(texto, color_fondo) {
+  ggplot() +
+    annotate("rect", xmin = 0, xmax = 1, ymin = 0, ymax = 1, fill = color_fondo) +
+    annotate("text", x = 0.5, y = 0.5, label = texto, color = "white",
+             fontface = "bold", size = 3.6, lineheight = 0.95) +
+    xlim(0, 1) + ylim(0, 1) +
+    theme_void()
+}
+
+# Panel 1 
+
+color_A <- "#1f3d7a"
+
+fb_long <- fb %>%
+  separate_rows(Limitaciones, sep = ",\\s*") %>%
+  mutate(Limitaciones = str_trim(Limitaciones))
+
+orden_A <- fb_long %>% count(Limitaciones, sort = TRUE) %>% pull(Limitaciones)
+n_A <- length(orden_A)
+angulos_A <- tibble(
+  Limitaciones = orden_A,
+  angle = seq(0, 2 * pi, length.out = n_A + 1)[1:n_A]
+)
+
+conteo_A <- fb_long %>%
+  count(Limitaciones, name = "n") %>%
+  left_join(angulos_A, by = "Limitaciones") %>%
+  arrange(angle)
+
+conteo_A_closed <- bind_rows(conteo_A, conteo_A[1, ])
+
+conteo_A <- conteo_A %>%
+  mutate(n_label = n - 0.42)   
+
+radar_A <- ggplot(conteo_A_closed, aes(x = angle, y = n)) +
+  geom_polygon(fill = color_A, alpha = 0.1, 
+               color = color_A, linewidth = 1) +
+  geom_point(color = color_A, size = 2.2) +
+  geom_text(data = conteo_A,
+            aes(x = angle, y = n_label, label = n),
+            color = color_A,
+            fontface = "bold",
+            size = 3) +
+  scale_x_continuous(
+    breaks = angulos_A$angle,
+    labels = angulos_A$Limitaciones,
+    limits = c(0, 2*pi)
+  ) +
+  scale_y_continuous(
+    limits = c(0, max(conteo_A$n)*1.2)
+  ) +
+  coord_polar(start = 0, clip = "off") +
+  theme_minimal(base_size = 8) +
+  theme(
+    axis.title = element_blank(),
+    axis.text.y = element_blank(),
+    panel.grid.major = element_line(color = "grey80"),
+    axis.text.x = element_text(
+      size = 7,
+      face = "bold",
+      color = "grey10"
+    ),
+    plot.margin = margin(40, 80, 40, 80)
+  )
+
+banner_A <- crear_banner("A. Main Challenges Limiting\nConservation and Use of Orphan Crops", color_A)
+
+panel_A <- banner_A / radar_A + plot_layout(heights = c(1, 8))
+
+panel_A
+# Panel 2 
+
+
+color_B <- "#2e7d32"
+
+conteo_B <- fb %>%
+  count(Disponibilidad_intercambio, name = "n") %>%
+  drop_na(Disponibilidad_intercambio)
+
+n_B <- nrow(conteo_B)
+angulos_B <- tibble(
+  Disponibilidad_intercambio = conteo_B$Disponibilidad_intercambio,
+  angle = seq(0, 2 * pi, length.out = n_B + 1)[1:n_B]
+)
+
+conteo_B <- conteo_B %>% left_join(angulos_B, by = "Disponibilidad_intercambio") %>% arrange(angle)
+conteo_B_closed <- bind_rows(conteo_B, conteo_B[1, ])
+
+radar_B <- ggplot(conteo_B_closed, aes(x = angle, y = n)) +
+  geom_polygon(fill = color_B, alpha = 0.25, color = color_B, linewidth = 1) +
+  geom_point(color = color_B, size = 2.2) +
+  geom_text(data = conteo_B, aes(label = n),
+            vjust = -1.1, fontface = "bold", color = color_B, size = 3) +
+  scale_x_continuous(breaks = angulos_B$angle, labels = angulos_B$Disponibilidad_intercambio, limits = c(0, 2 * pi)) +
+  scale_y_continuous(limits = c(0, max(conteo_B$n) * 1.2)) +
+  coord_polar(start = 0) +
+  theme_minimal(base_size = 11) +
+  theme(
+    axis.title = element_blank(), axis.text.y = element_blank(),
+    panel.grid.major = element_line(color = "grey80"),
+    axis.text.x = element_text(size = 9, face = "bold", color = "grey20")
+  )
+
+banner_B <- crear_banner("B. Availability of Genetic Material\n for Exchange", color_B)
+
+panel_B <- banner_B / radar_B + plot_layout(heights = c(1, 8))
+
+(panel_A | panel_B) +
+  plot_annotation(
+    title = "Challenges and Availability Identified by Respondents",
+    theme = theme(plot.title = element_text(face = "bold", size = 15, hjust = 0.5))
+  )
+
+ggsave("manuscript/Figuue_2.png", width = 12, height = 6, dpi = 300)
+```
 
 ```{r}
+library(readr)
+library(dplyr)
+library(ggplot2)
 
+datos <- read_csv("files/datos_unidos.csv", show_col_types = FALSE)
+
+str(datos)
+
+anual <- datos %>%
+  group_by(Year) %>%
+  summarise(
+    Publications = n(),
+    Citations = sum(`Cited by`, na.rm = TRUE),
+    .groups = "drop"
+  ) %>%
+  arrange(Year)
+
+factor <- max(anual$Publications) / max(anual$Citations)
+
+y_max <- ceiling(max(anual$Publications) / 5) * 5 + 5
+y_breaks <- seq(0, y_max, by = 5)
+
+ggplot(anual, aes(x = Year)) +
+  
+  geom_col(
+    aes(y = Publications, fill = "Publications"),
+    width = 0.8
+  ) +
+  
+  geom_line(
+    aes(y = Citations * factor, colour = "Citations"),
+    linewidth = 1
+  ) +
+  
+  geom_point(
+    aes(y = Citations * factor, colour = "Citations"),
+    size = 2
+  ) +
+  
+  scale_fill_manual(
+    name = NULL,
+    values = c("Publications" = "#9fd3f2")
+  ) +
+  
+  scale_colour_manual(
+    name = NULL,
+    values = c("Citations" = "#b22222")
+  ) +
+  
+  scale_y_continuous(
+    limits = c(0, y_max),
+    breaks = y_breaks,
+    expand = c(0, 0),
+    name = "Publications",
+    sec.axis = sec_axis(
+      ~./factor,
+      name = "Citations",
+      breaks = y_breaks / factor,
+      labels = function(x) round(x)
+    )
+  ) +
+  
+  scale_x_continuous(
+    breaks = seq(min(anual$Year), max(anual$Year), by = 1),
+    expand = c(0, 0)
+  ) +
+  
+  labs(x = "Year") +
+  
+  theme_bw(base_size = 12) +
+  
+  theme(
+    panel.grid.major.y = element_line(colour = "grey85"),
+    panel.grid.major.x = element_blank(),
+    panel.grid.minor = element_blank(),
+    
+    axis.text.x = element_text(
+      angle = 60,
+      hjust = 1,
+      size = 8
+    ),
+    axis.title.y.left = element_text(face = "bold"),
+    axis.title.y.right = element_text(face = "bold"),
+    axis.title.x = element_text(face = "bold"),
+    
+    legend.position = "bottom",
+    legend.title = element_blank(),
+    legend.key = element_blank(),
+    legend.text = element_text(size = 10),
+    legend.spacing.x = unit(0.3, "cm"),
+    
+    panel.border = element_rect(
+      colour = "black",
+      fill = NA,
+      linewidth = 0.8
+    )
+  ) +
+  guides(
+    fill = guide_legend(order = 1),
+    colour = guide_legend(order = 2)
+  )
 ```
+
+
+```{r}
+#========================================================
+# LIBRERÍAS
+#========================================================
+
+library(bibliometrix)
+library(dplyr)
+library(tidyr)
+library(stringr)
+library(writexl)
+
+#========================================================
+# IMPORTAR LA BASE DE DATOS
+#========================================================
+
+M <- convert2df(
+  file = "files/datos_unidos.csv",
+  dbsource = "scopus",
+  format = "csv"
+)
+
+#========================================================
+# EXTRAER TODOS LOS AUTORES DE LA BASE DE DATOS
+#========================================================
+
+autores_totales <- M %>%
+  separate_rows(AU, sep = ";") %>%
+  mutate(AU = str_trim(AU)) %>%
+  distinct(AU)
+
+# Visualizar los primeros autores
+head(autores_totales, 50)
+
+#========================================================
+# BUSCAR LOS AUTORES DEL CLÚSTER POR APELLIDO
+#========================================================
+
+cluster <- M %>%
+  filter(
+    grepl("Maughan", AU, ignore.case = TRUE) |
+      grepl("Jellen", AU, ignore.case = TRUE) |
+      grepl("Fairbanks", AU, ignore.case = TRUE) |
+      grepl("Coleman", AU, ignore.case = TRUE) |
+      grepl("Stevens", AU, ignore.case = TRUE) |
+      grepl("Bonifacio", AU, ignore.case = TRUE)
+  )
+
+#========================================================
+# COMPROBAR CUÁNTOS DOCUMENTOS SE ENCONTRARON
+#========================================================
+
+nrow(cluster)
+
+#========================================================
+# ELIMINAR DOCUMENTOS DUPLICADOS
+#========================================================
+
+cluster <- cluster %>%
+  distinct(TI, .keep_all = TRUE)
+
+#========================================================
+# EXTRAER LAS PUBLICACIONES DEL CLÚSTER
+#========================================================
+
+publicaciones <- cluster %>%
+  select(
+    TI,     # Título
+    AU,     # Autores
+    PY,     # Año
+    SO,     # Revista
+    TC,     # Citas
+    DE,     # Palabras clave
+    AB      # Resumen
+  )
+
+# Ver las publicaciones encontradas
+publicaciones
+
+#========================================================
+# PALABRAS CLAVE MÁS FRECUENTES DEL CLÚSTER
+#========================================================
+
+keywords <- cluster %>%
+  separate_rows(DE, sep = ";") %>%
+  mutate(DE = str_trim(DE)) %>%
+  filter(DE != "") %>%
+  count(DE, sort = TRUE)
+
+# Mostrar las 30 palabras clave más frecuentes
+head(keywords, 30)
+
+#========================================================
+# EXPORTAR LOS RESULTADOS A EXCEL
+#========================================================
+
+write_xlsx(
+  list(
+    Publicaciones = publicaciones,
+    Keywords = keywords
+  ),
+  path = "Cluster_autores.xlsx"
+)
+
+#========================================================
+# EXPORTAR EN CSV (OPCIONAL)
+#========================================================
+
+write.csv(
+  publicaciones,
+  "Publicaciones_cluster.csv",
+  row.names = FALSE
+)
+
+write.csv(
+  keywords,
+  "Keywords_cluster.csv",
+  row.names = FALSE
+)
+
+#========================================================
+# MOSTRAR LOS TÍTULOS DE LOS ARTÍCULOS
+#========================================================
+
+publicaciones$TI
+```
+
