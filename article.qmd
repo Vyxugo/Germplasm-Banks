@@ -30,9 +30,38 @@ source("http://inkaverse.com/docs.r")
 ```
 
 ```{r}
+#| label: format-article-md
+#| echo: false
+
+md_raw <- readLines("render2rticle.md", encoding = "UTF-8", warn = FALSE)
+
+title_idx <- grep("^(#\\s|\\*\\*)", md_raw)[1]
+
+author_idx <- which(nchar(trimws(md_raw)) > 0 & seq_along(md_raw) > title_idx)[1]
+
+md_raw[author_idx] <- gsub(
+  "([[:alpha:]\\.])([0-9]{1,2}(?:,[0-9]{1,2})*\\\\?\\*?)",
+  "\\1^\\2^",
+  md_raw[author_idx],
+  perl = TRUE
+)
+md_raw <- gsub("^([0-9]{1,2})([[:alpha:]])", "^\\1^ \\2", md_raw, perl = TRUE)
+
+pat_caption <- paste0(
+  "^(\\[\\*\\*(?:Table|Figure|Tabla|Figura)\\s+[0-9]+(?:\\\\\\.\\*\\*|\\*\\*\\.)\\]\\([^)]*\\))\\s*",
+  "|",
+  "^(\\[\\*\\*(?:Table|Figure|Tabla|Figura)\\s+[0-9]+\\*\\*\\]\\([^)]*\\))(?:\\*\\*\\.\\*\\*|\\.)\\s*"
+)
+is_caption <- grepl(pat_caption, md_raw, perl = TRUE)
+md_raw[is_caption] <- gsub(pat_caption, "\\1\\2: ", md_raw[is_caption], perl = TRUE)
+
+writeLines(md_raw, "render2rticle_V1.md", useBytes = TRUE)
+```
+
+```{r}
 #| results: 'asis'
 
-"render2rticle.md" %>% 
+"render2rticle_V1.md" %>% 
   rticle(type = "asis") %>% # ["asis" or "list"]
   knitr::knit_child(quiet = TRUE) %>% 
   cat(sep = '\n')
@@ -42,9 +71,9 @@ source("http://inkaverse.com/docs.r")
 knitr::knit_exit()
 ```
 
+# GitHub: check files
+
 ```{bash}
-#| label: git check
-#| eval: false
 
 SIZE_MB=100
 EXCLUDE_DIRS=(".git" "xclude")
@@ -58,9 +87,9 @@ git reset --soft HEAD~0
 git status
 ```
 
+# GitHub: update repository
+
 ```{bash}
-#| label: git > github
-#| eval: false
 
 git pull
 
@@ -69,8 +98,9 @@ git commit -m "update"
 git push
 ```
 
+# PDF to images (.jpg)
+
 ```{r}
-#| label: pdf to jpeg
 #| eval: false
 
 library(tidyverse)
@@ -85,18 +115,19 @@ imgs <- 1:length(pdf4pub) %>% map(\(x) {
   
   filename <- pdf4pub[x] %>% 
     basename() %>% 
-    gsub(".pdf", "\\1.jpeg", .) 
+    gsub(".pdf", "\\1.jpg", .) 
   
   pdf4pub[x] %>% 
     image_read_pdf() %>% 
     # image_transparent("red") %>% 
-    image_write(format = "jpeg", file.path(path, filename))
+    image_write(format = "jpg", file.path(path, filename))
   
 })
 ```
 
+# Images to PDF
+
 ```{r}
-#| label: Images to PDF
 #| eval: false
 
 library(tidyverse)
@@ -111,8 +142,9 @@ img2pdf <- list.files(".", full.names = T
               , file.path(getwd(), "figures.pdf"))
 ```
 
+# Images to grid
+
 ```{r}
-#| label: Images to grids
 #| eval: false
 
 library(tidyverse)
@@ -138,8 +170,9 @@ plot <- grid %>%
          )
 ```
 
+# Zip files
+
 ```{r}
-#| label: zip file
 #| eval: false
 
 tozip <- "manuscript" 
@@ -151,3 +184,4 @@ utils::zip(zipfile = paste0(tozip, ".zip")
                              , flags = "-r9Xj"
                              )
 ```
+

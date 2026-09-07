@@ -1,6 +1,6 @@
 #  **Orphan crops as strategic plant genetic resources in Peru: scientific trends and the status of *ex situ* conservation** 
 
-Victor-Hugo Baldera-Chapoñan1,2,3\*, Wagner Meza-Maicelo1,2,3, Yoel Diaz-Saucedo1,3, Ivan Manrique4,  German De La Cruz5, Aquilino Alvarez-Caceres6, Maywa Cecilia Blanco-Zamalloa6, Catalina Jimenez-Aguilar6, Maria Rosario Elsa Valderrama-Valencia7, Angel Mauricio Holguer Mujica Sanchez8, Jorge Alberto Condori-Apfata3, Jorge Luis Maicelo Quintana9,  Flavio Lozano-Isla1,2,3\*.
+Victor-Hugo Baldera-Chapoñan^1,2,3\*^, Wagner Meza-Maicelo^1,2,3^, Yoel Diaz-Saucedo^1,3^, Ivan Manrique^4^,  German De La Cruz^5^, Aquilino Alvarez-Caceres^6^, Maywa Cecilia Blanco-Zamalloa^6^, Catalina Jimenez-Aguilar^6^, Maria Rosario Elsa Valderrama-Valencia^7^, Angel Mauricio Holguer Mujica Sanchez^8^, Jorge Alberto Condori-Apfata^3^, Jorge Luis Maicelo Quintana^9^,  Flavio Lozano-Isla^1,2,3\*^.
 
 1 Centro de Investigación e Innovación en Granos y Semillas, Universidad Nacional Toribio Rodríguez de Mendoza de Amazonas (UNTRM), Chachapoyas \- Amazonas 01001, Perú..
 
