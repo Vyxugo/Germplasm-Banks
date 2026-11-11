@@ -1,0 +1,13 @@
+Species;Scopus records (n);Accessions (n);Organizations (n);Genomic (% acc.);Biochemical (% acc.);Field-only (% acc.);Gap indicator
+Quinoa (Chenopodium quinoa);81;4194;6;10.0;20.3;33.5;Research-dominant (records 50.6% vs. accessions 28.5%)
+Kiwicha (Amaranthus caudatus);27;2003;4;0.0;0.0;0.0;"Balanced; no genomic or biochemical characterization reported"
+Tarwi (Lupinus mutabilis);13;3344;5;0.0;13.5;0.1;"Research gap (accessions 22.8% vs. records 8.1%); no genomic characterization"
+Oca (Oxalis tuberosa);8;2152;5;0.5;40.9;14.9;"Research gap (accessions 14.6% vs. records 5.0%); genomic <1%"
+Olluco (Ullucus tuberosus);5;998;5;54.9;1.0;24.8;"Balanced; highest genomic coverage (54.9%)"
+Cañihua (Chenopodium pallidicaule);4;613;3;0.0;57.1;41.3;"Field-only 41.3%; no genomic characterization"
+Mashua (Tropaeolum tuberosum);4;610;5;35.4;1.6;26.2;"Balanced; genomic 35.4%"
+Yacón (Smallanthus sonchifolius);4;318;4;18.2;18.2;14.5;"Balanced; small holdings (318)"
+Arracacha (Arracacia xanthorrhiza);6;284;3;0.0;14.8;85.2;Single-modality risk (85.2% field-only)
+Maca (Lepidium meyenii);0;178;2;0.0;0.0;0.0;"Documentation gap: no records; 88.2% of accessions uncharacterized"
+Chia (Salvia hispanica)*;8;0;0;–;–;–;No ex situ accessions reported (non-Andean reference)
+Total;160;14694;7;8.5;18.0;18.2;

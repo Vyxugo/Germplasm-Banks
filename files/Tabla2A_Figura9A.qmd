@@ -1,0 +1,159 @@
+---
+title: "Figure 9A and Table 2A: research effort versus conservation effort"
+format:
+  html:
+    self-contained: true
+    toc: false
+    code-fold: true
+execute:
+  warning: false
+  message: false
+  echo: true
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r}
+#| label: setup
+
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+library(patchwork)
+library(scales)
+library(knitr)
+if (!requireNamespace("ggrepel", quietly = TRUE)) install.packages("ggrepel")
+library(ggrepel)
+```
+
+# Data (typed manually)
+
+Scopus records come from the 10 species-specific searches (n = 160; three records were retrieved by more than one search). Accessions and characterization come from the questionnaire and SIRGE. Percentages refer to accessions held in collections where the approach is reported (upper bounds).
+
+```{r}
+#| label: data
+
+dat <- tribble(
+  ~Species,    ~Latin,                      ~Records, ~Accessions, ~Orgs, ~Genomic, ~Biochem, ~FieldOnly, ~Indicator,
+  "Quinoa",    "Chenopodium quinoa",              81,        4194,    6,     10.0,     20.3,       33.5, "Research-dominant (records 50.6% vs. accessions 28.5%)",
+  "Kiwicha",   "Amaranthus caudatus",             27,        2003,    4,      0.0,      0.0,        0.0, "Balanced; no genomic or biochemical characterization reported",
+  "Tarwi",     "Lupinus mutabilis",               13,        3344,    5,      0.0,     13.5,        0.1, "Research gap (accessions 22.8% vs. records 8.1%); no genomic characterization",
+  "Oca",       "Oxalis tuberosa",                  8,        2152,    5,      0.5,     40.9,       14.9, "Research gap (accessions 14.6% vs. records 5.0%); genomic <1%",
+  "Olluco",    "Ullucus tuberosus",                5,         998,    5,     54.9,      1.0,       24.8, "Balanced; highest genomic coverage (54.9%)",
+  "Cañihua",   "Chenopodium pallidicaule",         4,         613,    3,      0.0,     57.1,       41.3, "Field-only 41.3%; no genomic characterization",
+  "Mashua",    "Tropaeolum tuberosum",             4,         610,    5,     35.4,      1.6,       26.2, "Balanced; genomic 35.4%",
+  "Yacón",     "Smallanthus sonchifolius",         4,         318,    4,     18.2,     18.2,       14.5, "Balanced; small holdings (318)",
+  "Arracacha", "Arracacia xanthorrhiza",           6,         284,    3,      0.0,     14.8,       85.2, "Single-modality risk (85.2% field-only)",
+  "Maca",      "Lepidium meyenii",                 0,         178,    2,      0.0,      0.0,        0.0, "Documentation gap: no records; 88.2% of accessions uncharacterized",
+  "Chia",      "Salvia hispanica",                 8,           0,    0,       NA,       NA,         NA, "No ex situ accessions reported (non-Andean reference)"
+)
+
+# checks: must be 160 and 14,694
+c(records = sum(dat$Records), accessions = sum(dat$Accessions))
+
+dat <- dat %>%
+  mutate(pct_rec = 100 * Records / sum(Records),
+         pct_acc = 100 * Accessions / sum(Accessions))
+
+# Spearman: n = 11 and n = 10 (without chia)
+cor.test(dat$Records, dat$Accessions, method = "spearman", exact = FALSE)
+dat10 <- filter(dat, Species != "Chia")
+cor.test(dat10$Records, dat10$Accessions, method = "spearman", exact = FALSE)
+```
+
+# Figure 9A
+
+```{r}
+#| label: fig-9A
+#| fig-width: 11
+#| fig-height: 5.2
+
+col_rec <- "#1f3d7a"
+col_acc <- "#2e7d32"
+
+# Panel A: share of records vs share of accessions
+orden <- dat %>% arrange(desc(pct_acc), desc(pct_rec)) %>% pull(Species)
+
+dA <- dat %>%
+  select(Species, `Scopus records` = pct_rec, `Ex situ accessions` = pct_acc) %>%
+  pivot_longer(-Species, names_to = "Effort", values_to = "pct") %>%
+  mutate(Species = factor(Species, levels = rev(orden)),
+         Effort  = factor(Effort, levels = c("Scopus records", "Ex situ accessions")))
+
+pA <- ggplot(dA, aes(x = pct, y = Species, fill = Effort)) +
+  geom_col(position = position_dodge(width = 0.8, preserve = "single"),
+           width = 0.72) +
+  geom_text(aes(label = sprintf("%.1f", pct)),
+            position = position_dodge(width = 0.8), hjust = -0.2, size = 3) +
+  scale_fill_manual(values = c("Scopus records" = col_rec,
+                               "Ex situ accessions" = col_acc), name = NULL,
+                    guide = guide_legend(reverse = TRUE)) +
+  scale_x_continuous(expand = expansion(mult = c(0, 0.12))) +
+  scale_y_discrete(labels = function(x) ifelse(x == "Chia", "Chia*", x)) +
+  labs(x = "Share of total (%)", y = NULL, tag = "A") +
+  theme_classic(base_size = 11) +
+  theme(legend.position = "top",
+        legend.justification = "left",
+        axis.text.y = element_text(face = "bold", color = "black"),
+        plot.tag = element_text(face = "bold", size = 14))
+
+# Panel B: association (log scales; records + 1 so Maca, with 0 records, is shown)
+pB <- ggplot(dat10, aes(x = Records + 1, y = Accessions)) +
+  geom_smooth(method = "lm", formula = y ~ x, se = FALSE,
+              color = "grey55", linetype = "dashed", linewidth = 0.6) +
+  geom_point(size = 3.2, color = col_rec) +
+  geom_text_repel(aes(label = Species), size = 3.3, seed = 1,
+                  min.segment.length = 0.2, box.padding = 0.4) +
+  annotate("text", x = 1, y = 6500, hjust = 0, size = 3.4, fontface = "italic",
+           label = "Spearman ρ = 0.83, P = 0.003 (n = 10)") +
+  scale_x_log10(breaks = c(1, 3, 10, 30, 100), labels = c(0, 2, 9, 29, 99)) +
+  scale_y_log10(labels = label_comma(), limits = c(100, 8000)) +
+  labs(x = "Scopus records (n)", y = "Accessions (n)", tag = "B") +
+  theme_classic(base_size = 11) +
+  theme(plot.tag = element_text(face = "bold", size = 14))
+
+fig9A <- pA + pB + plot_layout(widths = c(1.15, 1))
+fig9A
+
+dir.create("figures", showWarnings = FALSE)
+ggsave("figures/Figure_9A.tiff", fig9A, width = 11, height = 5.2,
+       dpi = 600, compression = "lzw")
+ggsave("figures/Figure_9A.png", fig9A, width = 11, height = 5.2, dpi = 300)
+```
+
+**Figure 9A.** Research effort and conservation effort for 11 orphan crops of Peru. (A) Share of species-specific Scopus records (n = 160; three records were retrieved by more than one search) and share of reported *ex situ* accessions (n = 14,694) by species. (B) Association between the number of records and the number of accessions (log scales; Spearman rank correlation; records + 1 plotted so that maca, with no records, is visible). \*Chia (*Salvia hispanica*) has records but no reported accessions and is therefore not shown in panel B. Sources: Scopus (accessed 6 July 2026), questionnaire, and SIRGE.
+
+# Table 2A
+
+**Table 2A.** Research–conservation gap indicators for 11 orphan crops of Peru. Gap indicators: share of accessions minus share of records >5 percentage points (research gap) or <−5 (research-dominant); ≥40% of accessions in field-only collections; ≥50% of accessions without reported characterization; no accessions. Percentages refer to accessions held in collections where the approach is reported (upper bounds). \*Salvia hispanica is a non-Andean reference species.
+
+```{r}
+#| label: tbl-2A
+
+fmt <- function(x) ifelse(is.na(x), "–", sprintf("%.1f", x))
+
+tab2A <- dat %>%
+  transmute(
+    Species = ifelse(Species == "Chia",
+                     paste0(Species, " (", Latin, ")*"),
+                     paste0(Species, " (", Latin, ")")),
+    `Scopus records (n)`   = as.character(Records),
+    `Accessions (n)`       = comma(Accessions),
+    `Organizations (n)`    = as.character(Orgs),
+    `Genomic (% acc.)`     = fmt(Genomic),
+    `Biochemical (% acc.)` = fmt(Biochem),
+    `Field-only (% acc.)`  = fmt(FieldOnly),
+    `Gap indicator`        = Indicator
+  ) %>%
+  bind_rows(tibble(
+    Species = "Total",
+    `Scopus records (n)` = "160", `Accessions (n)` = "14,694",
+    `Organizations (n)` = "7", `Genomic (% acc.)` = "8.5",
+    `Biochemical (% acc.)` = "18.0", `Field-only (% acc.)` = "18.2",
+    `Gap indicator` = ""
+  ))
+
+kable(tab2A, align = "lccccccl")
+
+readr::write_csv(tab2A, "figures/Table_2A.csv")
+```
